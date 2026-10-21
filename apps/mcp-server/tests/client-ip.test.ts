@@ -2,10 +2,8 @@ import type { IncomingMessage } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { getClientIp } from '../src/utils/client-ip.js';
 
-function makeReq(opts: {
-  headers?: Record<string, string | string[]>;
-  remoteAddress?: string;
-}): IncomingMessage {
+function makeReq(opts: { headers?: Record<string, string | string[]>; remoteAddress?: string }) {
+  // getClientIp reads only headers and socket.remoteAddress.
   return {
     headers: opts.headers ?? {},
     socket: { remoteAddress: opts.remoteAddress },

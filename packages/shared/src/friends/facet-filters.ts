@@ -1,3 +1,4 @@
+import type { ArchivedFilter } from './archived-filter.js';
 import type { RelationshipCategory } from './relationship-category.js';
 
 export interface FacetFilters {
@@ -10,6 +11,5 @@ export interface FacetFilters {
   // Circle external_ids.
   circles?: string[];
   favorites?: boolean;
-  // 'exclude' (hide archived) is the default.
-  archived?: 'include' | 'exclude' | 'only';
+  archived?: ArchivedFilter;
 }

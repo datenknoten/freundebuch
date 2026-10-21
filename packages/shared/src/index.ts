@@ -88,6 +88,7 @@ export * from './friend-notes/friend-note-response.js';
 export * from './friends/address-input.js';
 export * from './friends/address-response.js';
 export * from './friends/address-type.js';
+export * from './friends/archived-filter.js';
 export * from './friends/array-facet-field.js';
 export * from './friends/circle-facet-value-response.js';
 export * from './friends/dashboard-response.js';

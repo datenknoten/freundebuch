@@ -1,7 +1,9 @@
 import crypto from 'node:crypto';
 import http from 'node:http';
+import { parseJson, parseWith } from '@datenknoten/kit/schema';
 import { type Auth, createAuth } from '@freundebuch/backend/lib/auth.js';
 import { createAuthPool } from '@freundebuch/backend/lib/auth-pool.js';
+import { type Type, type } from 'arktype';
 import bcrypt from 'bcrypt';
 import pg from 'pg';
 import type { Logger } from 'pino';
@@ -12,6 +14,7 @@ import { createMcpRequestHandler } from '../../src/http-handler.js';
 import type { Session } from '../../src/session.js';
 import { createServices, type Services } from '../../src/utils/service-factory.js';
 import { TEST_ENV } from './test-env.js';
+import { TestSetupError } from './test-setup.error.js';
 
 /**
  * Suite hooks only clone a database and boot an in-process HTTP server now, but
@@ -28,20 +31,12 @@ export interface TestContext {
   httpServer: http.Server;
   /** Name of the per-suite database cloned from the migrated template. */
   databaseName: string;
-  testUser: {
-    externalId: string;
-    email: string;
-    appPassword: string; // raw password in xxxx-xxxx-xxxx-xxxx format
-  };
-  otherUser: {
-    externalId: string;
-    email: string;
-    appPassword: string;
-  };
+  testUser: TestUser;
+  otherUser: TestUser;
 }
 
 /** Swap the database name in a postgres connection URI. */
-function withDatabase(uri: string, databaseName: string): string {
+function withDatabase(uri: string, databaseName: string) {
   const url = new URL(uri);
   url.pathname = `/${databaseName}`;
   return url.toString();
@@ -55,7 +50,7 @@ function withDatabase(uri: string, databaseName: string): string {
  * The admin connection targets `postgres`, not the template: CREATE DATABASE
  * ... TEMPLATE requires zero other sessions on the source database.
  */
-async function cloneTemplateDatabase(): Promise<{ databaseName: string; databaseUri: string }> {
+async function cloneTemplateDatabase() {
   const serverUri = inject('pgContainerUri');
   const databaseName = `test_${crypto.randomUUID().replace(/-/g, '')}`;
 
@@ -72,7 +67,7 @@ async function cloneTemplateDatabase(): Promise<{ databaseName: string; database
   return { databaseName, databaseUri: withDatabase(serverUri, databaseName) };
 }
 
-async function dropClonedDatabase(databaseName: string): Promise<void> {
+async function dropClonedDatabase(databaseName: string) {
   const adminPool = new pg.Pool({
     connectionString: withDatabase(inject('pgContainerUri'), 'postgres'),
     max: 1,
@@ -84,17 +79,33 @@ async function dropClonedDatabase(databaseName: string): Promise<void> {
   }
 }
 
-async function createTestUserWithAppPassword(
+interface TestUser {
+  externalId: string;
+  email: string;
+  // Raw password in xxxx-xxxx-xxxx-xxxx format.
+  appPassword: string;
+}
+
+async function insertReturningRow<Row extends pg.QueryResultRow>(
   pool: pg.Pool,
-  email: string,
-): Promise<{ externalId: string; email: string; appPassword: string }> {
+  sql: string,
+  values: unknown[] = [],
+) {
+  const result = await pool.query<Row>(sql, values);
+  const [row] = result.rows;
+  if (row === undefined) {
+    throw new TestSetupError('INSERT returned no row', { code: 'TEST_SEED_FAILED' });
+  }
+  return row;
+}
+
+async function createTestUserWithAppPassword(pool: pg.Pool, email: string) {
   // Allocate the legacy FK anchor, then adopt its UUID as the Better Auth user
   // id (ADR 0003).
-  const userResult = await pool.query(
-    'INSERT INTO auth.users DEFAULT VALUES RETURNING id, external_id',
-  );
-  const userId = userResult.rows[0].id;
-  const externalId = userResult.rows[0].external_id;
+  const { id: userId, external_id: externalId } = await insertReturningRow<{
+    id: number;
+    external_id: string;
+  }>(pool, 'INSERT INTO auth.users DEFAULT VALUES RETURNING id, external_id');
 
   await pool.query(
     `INSERT INTO auth."user" (id, name, email, email_verified, created_at, updated_at)
@@ -102,19 +113,20 @@ async function createTestUserWithAppPassword(
     [externalId, email.split('@')[0], email],
   );
 
-  // Create self-profile (required for services to work)
-  const profileResult = await pool.query(
+  // The services require a self-profile.
+  const profile = await insertReturningRow<{ id: number }>(
+    pool,
     `INSERT INTO friends.friends (user_id, display_name)
      VALUES ($1, $2)
      RETURNING id, external_id`,
     [userId, `${email.split('@')[0]} (Self)`],
   );
   await pool.query('UPDATE auth."user" SET self_profile_id = $1 WHERE id = $2', [
-    profileResult.rows[0].id,
+    profile.id,
     externalId,
   ]);
 
-  // Create app password via direct SQL (matching the service's create logic exactly)
+  // Mirrors AppPasswordsService's create logic exactly.
   const rawPassword = crypto.randomBytes(24).toString('base64url');
   // Stored prefix is the hashed lookup key, not the raw characters (5.6).
   const passwordPrefix = crypto
@@ -130,52 +142,66 @@ async function createTestUserWithAppPassword(
     [userId, passwordHash, passwordPrefix],
   );
 
-  // Format as xxxx-xxxx-xxxx-xxxx (same as AppPasswordsService.formatPassword)
+  // Same format as AppPasswordsService.formatPassword.
   const chunks: string[] = [];
   for (let i = 0; i < rawPassword.length; i += 4) {
     chunks.push(rawPassword.slice(i, i + 4));
   }
   const formattedPassword = chunks.join('-');
 
-  return { externalId, email, appPassword: formattedPassword };
+  return { externalId, email, appPassword: formattedPassword } satisfies TestUser;
 }
 
-function startMcpHttpServer(
-  services: Services,
-  logger: Logger,
-  pool: pg.Pool,
-  auth: Auth,
-): Promise<{ server: http.Server; baseUrl: string; sessions: Map<string, Session> }> {
-  return new Promise((resolve) => {
+interface StartedServer {
+  server: http.Server;
+  baseUrl: string;
+  sessions: Map<string, Session>;
+}
+
+function startMcpHttpServer(services: Services, logger: Logger, pool: pg.Pool, auth: Auth) {
+  return new Promise<StartedServer>((resolve, reject) => {
     const sessions = new Map<string, Session>();
     const handler = createMcpRequestHandler({ services, logger, sessions, pool, auth });
     const httpServer = http.createServer(handler);
 
-    httpServer.listen(0, () => {
-      const addr = httpServer.address() as { port: number };
-      resolve({ server: httpServer, baseUrl: `http://localhost:${addr.port}`, sessions });
-    });
+    function onListening() {
+      const address = httpServer.address();
+      if (address === null || typeof address === 'string') {
+        reject(
+          new TestSetupError('Test server has no TCP address', { code: 'TEST_SERVER_FAILED' }),
+        );
+        return;
+      }
+      resolve({ server: httpServer, baseUrl: `http://localhost:${address.port}`, sessions });
+    }
+    httpServer.listen(0, onListening);
   });
 }
 
-export function basicAuthHeader(email: string, password: string): string {
+function closeHttpServer(httpServer: http.Server) {
+  return new Promise<void>((resolve) => {
+    function onClosed() {
+      resolve();
+    }
+    httpServer.close(onClosed);
+  });
+}
+
+export function basicAuthHeader(email: string, password: string) {
   return `Basic ${Buffer.from(`${email}:${password}`).toString('base64')}`;
 }
 
-/**
- * Send an MCP JSON-RPC request and return the parsed response
- */
 export async function mcpRequest(
   baseUrl: string,
   body: unknown,
   options: { email: string; password: string; sessionId?: string },
-): Promise<{ status: number; headers: Headers; body: unknown }> {
+) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json, text/event-stream',
     Authorization: basicAuthHeader(options.email, options.password),
   };
-  if (options.sessionId) {
+  if (options.sessionId !== undefined && options.sessionId !== '') {
     headers['mcp-session-id'] = options.sessionId;
   }
 
@@ -187,14 +213,14 @@ export async function mcpRequest(
 
   let responseBody: unknown;
   const contentType = response.headers.get('content-type') ?? '';
-  if (contentType.includes('application/json')) {
+  if (contentType.includes('application/json') === true) {
     responseBody = await response.json();
-  } else if (contentType.includes('text/event-stream')) {
-    // Parse SSE response to extract JSON-RPC result
+  } else if (contentType.includes('text/event-stream') === true) {
+    // The JSON-RPC result is the last parseable SSE data line.
     const text = await response.text();
     const lines = text.split('\n');
     for (const line of lines) {
-      if (line.startsWith('data: ')) {
+      if (line.startsWith('data: ') === true) {
         try {
           responseBody = JSON.parse(line.slice(6));
         } catch {
@@ -206,7 +232,12 @@ export async function mcpRequest(
     responseBody = await response.text();
   }
 
-  return { status: response.status, headers: response.headers, body: responseBody };
+  const result: { status: number; headers: Headers; body: unknown } = {
+    status: response.status,
+    headers: response.headers,
+    body: responseBody,
+  };
+  return result;
 }
 
 /**
@@ -216,11 +247,7 @@ export async function mcpRequest(
  * is fully consumed before returning. This prevents connection pool
  * issues with Node.js fetch/undici on SSE streams.
  */
-export async function initMcpSession(
-  baseUrl: string,
-  email: string,
-  password: string,
-): Promise<string> {
+export async function initMcpSession(baseUrl: string, email: string, password: string) {
   const response = await fetch(`${baseUrl}/mcp`, {
     method: 'POST',
     headers: {
@@ -240,25 +267,25 @@ export async function initMcpSession(
     }),
   });
 
-  // Fully consume the response body to drain the SSE stream
+  // Draining the SSE stream keeps undici's connection pool healthy.
   await response.text();
 
   const sessionId = response.headers.get('mcp-session-id');
-  if (!sessionId) {
-    throw new Error(`No session ID returned from initialize (status: ${response.status})`);
+  if (sessionId === null || sessionId === '') {
+    throw new TestSetupError('No session ID returned from initialize', {
+      code: 'TEST_SESSION_FAILED',
+      details: { status: response.status },
+    });
   }
   return sessionId;
 }
 
-/**
- * Call an MCP tool and return the result
- */
 export async function callTool(
   baseUrl: string,
   toolName: string,
   args: Record<string, unknown>,
   options: { email: string; password: string; sessionId: string },
-): Promise<{ status: number; body: unknown }> {
+) {
   const { status, body } = await mcpRequest(
     baseUrl,
     {
@@ -276,10 +303,7 @@ export async function callTool(
  * Revoke all app passwords for a user. Used in tests that need to simulate a
  * revoked credential; paired with `restoreAppPasswordsForUser` in a try/finally.
  */
-export async function revokeAppPasswordsForUser(
-  pool: pg.Pool,
-  userExternalId: string,
-): Promise<void> {
+export async function revokeAppPasswordsForUser(pool: pg.Pool, userExternalId: string) {
   await pool.query(
     `UPDATE auth.app_passwords ap
        SET revoked_at = NOW()
@@ -289,10 +313,7 @@ export async function revokeAppPasswordsForUser(
   );
 }
 
-export async function restoreAppPasswordsForUser(
-  pool: pg.Pool,
-  userExternalId: string,
-): Promise<void> {
+export async function restoreAppPasswordsForUser(pool: pg.Pool, userExternalId: string) {
   await pool.query(
     `UPDATE auth.app_passwords ap
        SET revoked_at = NULL
@@ -308,8 +329,10 @@ export async function restoreAppPasswordsForUser(
  * friend_circles) cascade with their parents so we don't need to clean them
  * explicitly.
  */
-export async function cleanupUserData(pool: pg.Pool, userExternalIds: string[]): Promise<void> {
-  if (userExternalIds.length === 0) return;
+export async function cleanupUserData(pool: pg.Pool, userExternalIds: string[]) {
+  if (userExternalIds.length === 0) {
+    return;
+  }
   await pool.query(
     `DELETE FROM encounters.encounters
        WHERE user_id IN (SELECT id FROM auth.users WHERE external_id = ANY($1::uuid[]))`,
@@ -329,7 +352,7 @@ export async function cleanupUserData(pool: pg.Pool, userExternalIds: string[]):
 }
 
 export function setupMcpTestSuite() {
-  let context: TestContext;
+  let context: TestContext | undefined;
 
   beforeAll(async () => {
     const { databaseName, databaseUri } = await cloneTemplateDatabase();
@@ -341,12 +364,13 @@ export function setupMcpTestSuite() {
     });
 
     const poolLogger = pino({ level: 'silent' });
-    pool.on('error', (err) => {
+    function onPoolError(err: Error) {
       poolLogger.error({ err }, 'pg pool error during MCP integration test');
-    });
+    }
+    pool.on('error', onPoolError);
 
     const config = loadConfig({ ...TEST_ENV, DATABASE_URL: databaseUri });
-    const logger: Logger = pino({ level: 'silent' });
+    const logger = pino({ level: 'silent' });
     const services = createServices({ db: pool, logger, photoConfig: config });
     const authPool = createAuthPool({ config, logger });
     const auth = createAuth({ config, pool: authPool, logger });
@@ -370,19 +394,67 @@ export function setupMcpTestSuite() {
   }, SUITE_HOOK_TIMEOUT_MS);
 
   afterAll(async () => {
-    if (context?.httpServer) {
-      await new Promise<void>((resolve) => context.httpServer.close(() => resolve()));
+    if (context === undefined) {
+      return;
     }
-    if (context?.pool) {
-      await context.pool.end();
-    }
-    if (context?.authPool) {
-      await context.authPool.end();
-    }
-    if (context?.databaseName) {
-      await dropClonedDatabase(context.databaseName);
-    }
+    await closeHttpServer(context.httpServer);
+    await context.pool.end();
+    await context.authPool.end();
+    await dropClonedDatabase(context.databaseName);
   }, SUITE_HOOK_TIMEOUT_MS);
 
-  return { getContext: () => context };
+  function getContext() {
+    if (context === undefined) {
+      throw new TestSetupError('MCP test suite is not set up', { code: 'TEST_SUITE_NOT_READY' });
+    }
+    return context;
+  }
+
+  return { getContext };
+}
+
+const ToolCallBodySchema = type({
+  'result?': {
+    'content?': type({ 'text?': 'string' }).array(),
+    'isError?': 'boolean',
+  },
+});
+
+const ToolsListBodySchema = type({
+  'result?': { 'tools?': type({ name: 'string' }).array() },
+});
+
+export function parseToolCall(body: unknown) {
+  const { result } = parseWith(ToolCallBodySchema, body);
+  return { text: result?.content?.[0]?.text, isError: result?.isError };
+}
+
+export function parseToolJson<S extends Type>(schema: S, body: unknown) {
+  const { text } = parseToolCall(body);
+  if (text === undefined) {
+    throw new TestSetupError('Tool result has no text content', { code: 'TEST_TOOL_RESULT_EMPTY' });
+  }
+  const parsed: S['infer'] = parseJson(schema, text);
+  return parsed;
+}
+
+export function parseToolNames(body: unknown) {
+  const { result } = parseWith(ToolsListBodySchema, body);
+  return result?.tools?.map((tool) => tool.name);
+}
+
+export async function insertFriend(
+  pool: pg.Pool,
+  userExternalId: string,
+  displayName: string,
+  nickname?: string,
+) {
+  const row = await insertReturningRow<{ external_id: string }>(
+    pool,
+    `INSERT INTO friends.friends (user_id, display_name, nickname)
+     SELECT u.id, $2, $3 FROM auth.users u WHERE u.external_id = $1
+     RETURNING external_id`,
+    [userExternalId, displayName, nickname ?? null],
+  );
+  return row.external_id;
 }

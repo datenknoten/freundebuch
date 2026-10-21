@@ -1,8 +1,13 @@
 import { type } from 'arktype';
 
-export const SearchSortBySchema = type(
-  '"relevance" | "display_name" | "created_at" | "updated_at"',
-);
+export const SEARCH_SORT_BY_FIELDS = [
+  'relevance',
+  'display_name',
+  'created_at',
+  'updated_at',
+] as const;
+
+export const SearchSortBySchema = type.enumerated(...SEARCH_SORT_BY_FIELDS);
 
 export type SearchSortBy = typeof SearchSortBySchema.infer;
 

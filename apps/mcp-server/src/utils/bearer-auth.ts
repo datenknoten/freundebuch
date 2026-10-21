@@ -48,10 +48,11 @@ export async function verifyBearerToken(req: IncomingMessage, options: BearerAut
   }
 
   // getMcpSession does not enforce expiry — reject expired/undated tokens.
-  const expiresAt = session.accessTokenExpiresAt
-    ? new Date(session.accessTokenExpiresAt).getTime()
-    : Number.NaN;
-  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+  const expiresAt =
+    session.accessTokenExpiresAt === undefined
+      ? Number.NaN
+      : new Date(session.accessTokenExpiresAt).getTime();
+  if (Number.isFinite(expiresAt) === false || expiresAt <= Date.now()) {
     logger.warn('MCP bearer token missing expiry or expired');
     return undefined;
   }
@@ -76,18 +77,23 @@ export async function verifyBearerToken(req: IncomingMessage, options: BearerAut
  * metadata URL. Prefer the configured BETTER_AUTH_URL (so it matches the OAuth
  * issuer exactly); otherwise derive it from the proxy headers nginx sets.
  */
-export function getPublicBaseUrl(req: IncomingMessage, configuredBaseUrl?: string): string {
-  if (configuredBaseUrl) {
+export function getPublicBaseUrl(req: IncomingMessage, configuredBaseUrl?: string) {
+  if (configuredBaseUrl !== undefined && configuredBaseUrl !== '') {
     return configuredBaseUrl.replace(/\/+$/, '');
   }
-  const proto =
-    (typeof req.headers['x-forwarded-proto'] === 'string' && req.headers['x-forwarded-proto']) ||
-    'https';
+  const proto = firstNonEmpty(req.headers['x-forwarded-proto']) ?? 'https';
   const host =
-    (typeof req.headers['x-forwarded-host'] === 'string' && req.headers['x-forwarded-host']) ||
-    (typeof req.headers.host === 'string' && req.headers.host) ||
+    firstNonEmpty(req.headers['x-forwarded-host']) ??
+    firstNonEmpty(req.headers.host) ??
     'localhost';
   // Only the first proto value is meaningful if a comma-joined list slips through.
   const scheme = (proto.split(',')[0] ?? proto).trim();
   return `${scheme}://${host}`;
+}
+
+function firstNonEmpty(value: string | string[] | undefined) {
+  if (typeof value === 'string' && value !== '') {
+    return value;
+  }
+  return undefined;
 }

@@ -1,5 +1,7 @@
 import { createRequire } from 'node:module';
+import { parseWith } from '@datenknoten/kit/schema';
 import { McpServer } from '@modelcontextprotocol/server';
+import { type } from 'arktype';
 import { registerCirclesTools } from './tools/circles.js';
 import { registerCollectivesTools } from './tools/collectives.js';
 import { registerEncountersTools } from './tools/encounters.js';
@@ -8,11 +10,13 @@ import { registerFriendsTools } from './tools/friends.js';
 import type { Services } from './utils/service-factory.js';
 
 const require = createRequire(import.meta.url);
-// biome-ignore lint/correctness/useImportExtensions: package.json is correct, not package.js
-const pkg: Record<string, unknown> = require('../package.json');
-const serverVersion = typeof pkg.version === 'string' ? pkg.version : 'unknown';
+const PACKAGE_JSON_PATH = '../package.json';
+const { version: serverVersion } = parseWith(
+  type({ version: 'string' }),
+  require(PACKAGE_JSON_PATH),
+);
 
-export function createMcpServer(services: Services, getUserId: () => string): McpServer {
+export function createMcpServer(services: Services, getUserId: () => string) {
   const server = new McpServer({
     name: 'freundebuch',
     version: serverVersion,

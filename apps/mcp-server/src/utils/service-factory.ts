@@ -25,7 +25,6 @@ export interface ServicesOptions {
   photoConfig: PhotoConfig;
 }
 
-/** The backend services the MCP tools call. */
 export interface Services {
   friends: FriendsService;
   circles: CirclesService;

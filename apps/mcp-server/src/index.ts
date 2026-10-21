@@ -16,17 +16,25 @@ const PRETTY_TRANSPORT = { target: 'pino-pretty', options: { colorize: true } };
 
 function closeHttpServer(httpServer: Server) {
   return new Promise<void>((resolve, reject) => {
-    httpServer.close((err) => (err === undefined ? resolve() : reject(err)));
+    function onClosed(err?: Error) {
+      if (err === undefined) {
+        resolve();
+        return;
+      }
+      reject(err);
+    }
+    httpServer.close(onClosed);
   });
 }
 
 function listen(httpServer: Server, port: number) {
   return new Promise<void>((resolve, reject) => {
     httpServer.once('error', reject);
-    httpServer.listen(port, () => {
+    function onListening() {
       httpServer.off('error', reject);
       resolve();
-    });
+    }
+    httpServer.listen(port, onListening);
   });
 }
 

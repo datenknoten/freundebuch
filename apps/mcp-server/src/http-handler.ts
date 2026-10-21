@@ -42,7 +42,8 @@ interface Authentication {
   user?: BearerAuthContext;
 }
 
-const DEFAULT_MAX_BODY_BYTES = 1_048_576; // 1 MiB; MCP JSON-RPC bodies are small.
+// MCP JSON-RPC bodies are small.
+const DEFAULT_MAX_BODY_BYTES = 1_048_576;
 
 function sendJson(
   res: ServerResponse,
@@ -173,34 +174,37 @@ type ReadResult = { ok: true; body: string } | { ok: false; reason: 'too-large' 
  * without waiting for the client to finish uploading). The remaining body is
  * drained in the background to keep the connection healthy.
  */
-async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadResult> {
+async function readBody(req: IncomingMessage, maxBytes: number) {
   const declared = Number.parseInt(req.headers['content-length'] ?? '', 10);
-  if (Number.isFinite(declared) && declared > maxBytes) {
+  if (Number.isFinite(declared) === true && declared > maxBytes) {
     // Swallow drain-time errors (client abort, socket reset). Without a listener,
     // an `'error'` event would crash the process via Node's default handler.
     req.on('error', () => undefined);
     req.resume();
-    return { ok: false, reason: 'too-large' };
+    return { ok: false, reason: 'too-large' } satisfies ReadResult;
   }
 
-  return new Promise((resolve) => {
+  return new Promise<ReadResult>((resolve) => {
     const chunks: Buffer[] = [];
     let total = 0;
-    let settled = false;
+    let isSettled = false;
 
-    const cleanup = () => {
+    function cleanup() {
       req.off('data', onData);
       req.off('end', onEnd);
       req.off('error', onError);
-    };
-    const settle = (value: ReadResult) => {
-      if (settled) return;
-      settled = true;
+    }
+
+    function settle(value: ReadResult) {
+      if (isSettled === true) {
+        return;
+      }
+      isSettled = true;
       cleanup();
       resolve(value);
-    };
+    }
 
-    const onData = (chunk: Buffer) => {
+    function onData(chunk: Buffer) {
       total += chunk.length;
       if (total > maxBytes) {
         chunks.length = 0;
@@ -208,23 +212,27 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadRes
         // settle() ran cleanup() and detached the original `'error'` listener.
         // Reattach a no-op so a drain-time abort doesn't crash the process.
         req.on('error', () => undefined);
-        req.resume(); // drain remaining bytes in background
+        req.resume();
         return;
       }
       chunks.push(chunk);
-    };
-    const onEnd = () => {
+    }
+
+    function onEnd() {
       settle({ ok: true, body: Buffer.concat(chunks).toString('utf-8') });
-    };
-    const onError = () => {
+    }
+
+    function onError() {
       settle({ ok: false, reason: 'stream-error' });
-    };
+    }
 
     req.on('data', onData);
     req.on('end', onEnd);
     req.on('error', onError);
   });
 }
+
+type SessionIdHeader = { ok: true; sessionId: string | undefined } | { ok: false };
 
 /**
  * Extract mcp-session-id from headers. Rejects duplicate headers.
@@ -234,23 +242,22 @@ async function readBody(req: IncomingMessage, maxBytes: number): Promise<ReadRes
  * `Array.isArray` check would miss duplicates. Walk `req.rawHeaders` directly
  * to count occurrences.
  */
-function readSessionIdHeader(
-  req: IncomingMessage,
-  res: ServerResponse,
-): { ok: true; sessionId: string | undefined } | { ok: false } {
+function readSessionIdHeader(req: IncomingMessage, res: ServerResponse) {
   let count = 0;
   let value: string | undefined;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
     if (req.rawHeaders[i]?.toLowerCase() === 'mcp-session-id') {
       count++;
-      if (count === 1) value = req.rawHeaders[i + 1];
+      if (count === 1) {
+        value = req.rawHeaders[i + 1];
+      }
       if (count > 1) {
         sendJson(res, 400, { error: 'Duplicate mcp-session-id header' });
-        return { ok: false };
+        return { ok: false } satisfies SessionIdHeader;
       }
     }
   }
-  return { ok: true, sessionId: value };
+  return { ok: true, sessionId: value } satisfies SessionIdHeader;
 }
 
 export function createMcpRequestHandler(options: McpRequestHandlerOptions) {
@@ -330,8 +337,11 @@ export function createMcpRequestHandler(options: McpRequestHandlerOptions) {
       }
 
       const newSessionId = randomUUID();
+      function generateSessionId() {
+        return newSessionId;
+      }
       const transport = new NodeStreamableHTTPServerTransport({
-        sessionIdGenerator: () => newSessionId,
+        sessionIdGenerator: generateSessionId,
       });
 
       const userId = user.userId;

@@ -5,6 +5,7 @@ import {
   parsePaginationQuery,
 } from '../pagination/pagination-query.js';
 import { parseSortQuery, type SortOptions, sortQueryFields } from '../sorting/sort-query.js';
+import { ArchivedFilterSchema } from './archived-filter.js';
 import { DEFAULT_FRIEND_PAGE_SIZE } from './default-friend-page-size.js';
 import type { FacetFilters } from './facet-filters.js';
 import { type RelationshipCategory, RelationshipCategorySchema } from './relationship-category.js';
@@ -72,7 +73,7 @@ function parseFilterArray(value: string | undefined) {
 }
 
 function parseArchivedFilter(value: string | undefined) {
-  if (value === 'include' || value === 'exclude' || value === 'only') {
+  if (ArchivedFilterSchema.allows(value) === true) {
     return value;
   }
   return undefined;
