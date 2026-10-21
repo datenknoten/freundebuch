@@ -25,7 +25,7 @@ hk = "1.9.2"
 # Pkl CLI is required by hk to evaluate `hk.pkl`.
 # Set HK_PKL_BACKEND=pklr (in mise.local.toml or your shell) to use hk's
 # built-in evaluator and skip installing pkl entirely.
-pkl = "0.29"
+pkl = "0.29.1"
 
 [env]
 # Wrap git hooks with `mise x` so the right tool versions are on PATH even
