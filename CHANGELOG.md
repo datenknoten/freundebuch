@@ -1,3 +1,7 @@
+## <small>3.3.1 (2026-10-21)</small>
+
+* fix(deps): Pin the SabreDAV PHP image to 8.4.27 ([447cb0f](https://gitlab.com/datenknoten/freundebuch/commit/447cb0f))
+
 ## 3.3.0 (2026-10-19)
 
 * feat(backend): Add the friend notes API ([161cdca](https://gitlab.com/datenknoten/freundebuch/commit/161cdca))
