@@ -10,3 +10,14 @@ onlyBuiltDependencies:
   - sharp
   - ssh2
   - '@sentry/cli'
+# Both semantic-release plugins load the `conventionalcommits` preset from their
+# own location. @commitlint/config-conventional pulls in preset 10.x, and aube's
+# hidden hoisting puts that copy in front of the root's 8.0.0. Preset 10 needs
+# conventional-changelog-writer 9, but release-notes-generator 14 ships writer 8.
+packageExtensions:
+  '@semantic-release/commit-analyzer@13':
+    dependencies:
+      conventional-changelog-conventionalcommits: 8.0.0
+  '@semantic-release/release-notes-generator@14':
+    dependencies:
+      conventional-changelog-conventionalcommits: 8.0.0
