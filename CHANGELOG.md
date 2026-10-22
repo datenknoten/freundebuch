@@ -1,3 +1,18 @@
+## [3.3.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.3...v3.3.4) (2026-10-22)
+
+### Bug Fixes
+
+* **backend:** Parse foreign responses and JSON with schemas ([8d681cd](https://gitlab.com/datenknoten/freundebuch/-/commit/8d681cd3d2f6306f7f379bc47d4181c9817f5adc))
+
+### Code Refactoring
+
+* **backend:** Adopt the kit error hierarchy and handleError ([ce17370](https://gitlab.com/datenknoten/freundebuch/-/commit/ce17370693d402c225b198610260320501c0d6ac))
+* **backend:** Apply house lint rules to backend sources ([8560b6f](https://gitlab.com/datenknoten/freundebuch/-/commit/8560b6f5c5297af195f083d463ff436ab636d5c1))
+* **backend:** Load config and the root logger once in main ([1257927](https://gitlab.com/datenknoten/freundebuch/-/commit/12579275ee304b53f580254a4c67df8c295dfe5e))
+* **backend:** Throw from getX and map wire input at the route boundary ([f802784](https://gitlab.com/datenknoten/freundebuch/-/commit/f8027841f4e94bd0c58ba219a9027385db438cc4))
+* **backend:** Wire services once and hand them to route factories ([de8accd](https://gitlab.com/datenknoten/freundebuch/-/commit/de8accd9b793f07b20de2adc60d685cf77a61bb4))
+* **database:** Apply house lint rules to migrations ([68277af](https://gitlab.com/datenknoten/freundebuch/-/commit/68277afaab4f4361ce61f85388b08a3d142bf8f7))
+
 ## [3.3.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.2...v3.3.3) (2026-10-22)
 
 ### Bug Fixes
