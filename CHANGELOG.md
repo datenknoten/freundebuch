@@ -1,3 +1,24 @@
+## [3.3.3](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.2...v3.3.3) (2026-10-22)
+
+### Bug Fixes
+
+* **deps:** Give the semantic-release plugins the 8.0.0 preset ([adb5829](https://gitlab.com/datenknoten/freundebuch/-/commit/adb582958604d46ca5b0c529f17f1fa682baff62))
+* **frontend:** Load i18n-iso-countries natively in the server-side render ([967fdb9](https://gitlab.com/datenknoten/freundebuch/-/commit/967fdb9e764a64ee0911941f343e578b8d2124a5))
+* **frontend:** Show a failed friend list load instead of rejecting unhandled ([c45f379](https://gitlab.com/datenknoten/freundebuch/-/commit/c45f379da58b8eb9ce40c8ac51d5491501bc0e30))
+* **shared:** Report every schema problem at once and move input defaults into schemas ([3f62bdd](https://gitlab.com/datenknoten/freundebuch/-/commit/3f62bddd3c33e76b39a6527a1035dab757ce3eb7))
+
+### Code Refactoring
+
+* **dx:** Apply house conventions to the danger rules and repo scripts ([144f8ee](https://gitlab.com/datenknoten/freundebuch/-/commit/144f8eef31d1c2b9ac3a3ec18afd20fc5b3f02b2))
+* **frontend:** Apply house lint rules to frontend sources ([aab0672](https://gitlab.com/datenknoten/freundebuch/-/commit/aab0672e733dea4ce7216812d596f595e8e0026e))
+* **frontend:** Name every thrown error and await every promise ([313be33](https://gitlab.com/datenknoten/freundebuch/-/commit/313be33ea1a1d555e91f052a669ece61238a315e))
+* **frontend:** Name Svelte components in PascalCase and drop folder barrels ([a4c4de5](https://gitlab.com/datenknoten/freundebuch/-/commit/a4c4de5dccd956523afb28ccf8151b077eefd1a3))
+* **frontend:** Read server and client config once and pass it on ([3842774](https://gitlab.com/datenknoten/freundebuch/-/commit/38427745146d0ed57136502c6d83c53b5450b958))
+* **frontend:** Turn API modules and stores into classes provided through context ([97c54cf](https://gitlab.com/datenknoten/freundebuch/-/commit/97c54cfcb8f56a8a7892d34e5b6a67124afedcec))
+* **shared:** Apply house lint rules to shared sources ([c02fb49](https://gitlab.com/datenknoten/freundebuch/-/commit/c02fb49df99885adf46690e179b7dd90ba4b99f6))
+* **shared:** Derive every wire type from an ArkType schema ([c39b176](https://gitlab.com/datenknoten/freundebuch/-/commit/c39b176dc76aa2b3beb26625062cc2a0dc815003))
+* **shared:** Split modules into one exported unit per file ([b7b5304](https://gitlab.com/datenknoten/freundebuch/-/commit/b7b5304296241b8e7d10d2327b8b14a6b4706d00))
+
 ## <small>3.3.2 (2026-10-21)</small>
 
 * fix(backend): Run the pgtyped CLI entry file instead of the bin shim ([5739bca](https://gitlab.com/datenknoten/freundebuch/commit/5739bca))
