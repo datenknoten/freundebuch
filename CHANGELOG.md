@@ -1,3 +1,14 @@
+## [3.3.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.4...v3.3.5) (2026-10-23)
+
+### Bug Fixes
+
+* **mcp-server:** Keep running when the database drops idle connections ([da99968](https://gitlab.com/datenknoten/freundebuch/-/commit/da9996894a622e83d9fd050ba47ed6a253f717f8))
+
+### Code Refactoring
+
+* **mcp-server:** Load config once in main and add one error boundary ([720c671](https://gitlab.com/datenknoten/freundebuch/-/commit/720c6718e9481c244d4fd4af12820f0df1a1a7b9))
+* **mcp-server:** Reuse shared schemas in tool inputs and apply house lint rules ([2b98c26](https://gitlab.com/datenknoten/freundebuch/-/commit/2b98c26259f0ce184bdcd743c49cbee0028e1deb))
+
 ## [3.3.4](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.3...v3.3.4) (2026-10-22)
 
 ### Bug Fixes
