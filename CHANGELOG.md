@@ -1,3 +1,9 @@
+## [3.3.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.5...v3.3.6) (2026-11-01)
+
+### Bug Fixes
+
+* **database:** Stop auto-linking club members as friends ([d5ec92e](https://gitlab.com/datenknoten/freundebuch/-/commit/d5ec92e1096182a10917fdb7fd9e8b6e85f8d570))
+
 ## [3.3.5](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.4...v3.3.5) (2026-10-23)
 
 ### Bug Fixes
