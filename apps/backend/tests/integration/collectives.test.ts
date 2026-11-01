@@ -6,6 +6,7 @@ import {
   CollectiveTypeListResponseSchema,
   EmailResponseSchema,
   FriendResponseSchema,
+  RelationshipPreviewResponseSchema,
 } from '@freundebuch/shared/index.js';
 import { type } from 'arktype';
 import { afterAll, assert, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -243,6 +244,48 @@ describe('Collectives API', () => {
       const child = await parseFriend(await req('GET', `/api/friends/${childId}`));
       const childToParent = child.relationships?.find((r) => r.relatedFriendId === parentId);
       expect(childToParent?.relationshipTypeId).toBe('child');
+    });
+
+    it('creates no relationships between members of a Club', async () => {
+      const club = (await listTypes(user.sessionCookies)).find((t) => t.name === 'Club');
+      assert.isDefined(club, 'the Club type is a system default');
+      const memberRole = club.roles.find((r) => r.roleKey === 'member');
+      assert.isDefined(memberRole, 'Club defines a member role');
+
+      const res = await req('POST', '/api/collectives', {
+        name: 'Chess Club',
+        collective_type_id: club.id,
+      });
+      expect(res.status).toBe(201);
+      const collectiveId = (await parseCollective(res)).id;
+
+      const memberAId = await createTestFriend(context.pool, user.externalId, 'Member A');
+      const memberBId = await createTestFriend(context.pool, user.externalId, 'Member B');
+
+      const addA = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: memberAId,
+        role_id: memberRole.id,
+      });
+      expect(addA.status).toBe(201);
+
+      const previewRes = await req('POST', `/api/collectives/${collectiveId}/members/preview`, {
+        friend_id: memberBId,
+        role_id: memberRole.id,
+      });
+      expect(previewRes.status).toBe(200);
+      const preview = parseWith(RelationshipPreviewResponseSchema, await previewRes.json());
+      expect(preview.relationships).toEqual([]);
+
+      const addB = await req('POST', `/api/collectives/${collectiveId}/members`, {
+        friend_id: memberBId,
+        role_id: memberRole.id,
+      });
+      expect(addB.status).toBe(201);
+
+      const memberA = await parseFriend(await req('GET', `/api/friends/${memberAId}`));
+      expect(memberA.relationships ?? []).toEqual([]);
+      const memberB = await parseFriend(await req('GET', `/api/friends/${memberBId}`));
+      expect(memberB.relationships ?? []).toEqual([]);
     });
 
     /**
