@@ -75,6 +75,7 @@ The existing contact schema maps directly to vCard 4.0 properties:
 | `social_profiles` | X-SOCIALPROFILE | Platform-specific |
 | `interests` | X-INTERESTS | Custom extension |
 | `met_info` | X-MET-DATE, X-MET-LOCATION, X-MET-CONTEXT | Custom extensions |
+| collectives (Epic 12) | KIND:group, MEMBER | Separate read-only group card per collective; MEMBER is urn:uuid:<friend external_id> |
 
 > **Note:** Contact notes (Epic 1C) are not yet implemented. Notes will not sync until that feature is complete.
 

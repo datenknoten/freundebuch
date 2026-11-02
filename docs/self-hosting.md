@@ -268,7 +268,7 @@ password — see [security-authentication.md](./security-authentication.md#app-p
 
 A vCard is narrower than the app's data model, so an edit arriving over CardDAV
 is applied as "change what this card can express", never as "replace
-everything". Three cases are worth knowing before you field a support question:
+everything". Four cases are worth knowing before you field a support question:
 
 - **Employment history.** A vCard has one `ORG`/`TITLE` slot. A sync updates the
   current position's job title, organization, department and notes, and leaves
@@ -281,6 +281,11 @@ everything". Three cases are worth knowing before you field a support question:
 - **Archived friends.** An archived friend leaves the address book. A client
   that still holds the card and tries to save an edit gets a `403` once, then
   drops the card on its next sync.
+- **Collectives.** Every collective appears in the address book as a read-only
+  group card (`KIND:group`; vCard 3 clients see `X-ADDRESSBOOKSERVER-KIND:GROUP`).
+  Its `MEMBER` entries list only active members whose own card is in the address
+  book, so archived and deleted friends drop out. Creating, editing or deleting
+  a group card from a client returns `403`; collectives are managed in the app.
 
 ## Address autocomplete
 
