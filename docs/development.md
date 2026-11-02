@@ -142,6 +142,15 @@ Single tool for linting and formatting (replaces ESLint + Prettier):
 - Integration tests for API endpoints
 - E2E tests for critical user flows
 
+### Test parallelism on smaller machines
+
+Vitest runs test files in parallel, by default with one worker per CPU core minus one (at most 12). On a weaker machine this load can stretch single frontend tests past the 5 s timeout, and a different test fails on every run. Vitest reads `VITEST_MAX_WORKERS`, which overrides the config. Set it for your machine in `mise.local.toml`; the pre-push hook runs through `mise x`, so the hook picks it up too:
+
+```toml
+[env]
+VITEST_MAX_WORKERS = "1"
+```
+
 ### Coverage reporting
 
 Coverage is reported per merge request rather than enforced per workspace: CI runs the tests with coverage, and a [Danger](https://danger.systems) rule (`packages/danger/src/rules/coverage.ts`) comments on the MR with the coverage of the files it changed, at an 80% threshold.
