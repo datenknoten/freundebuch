@@ -1,3 +1,10 @@
+## [3.4.0](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.6...v3.4.0) (2026-11-02)
+
+### Features
+
+* **backend:** Serve collectives as read-only vCard group cards ([408bd7a](https://gitlab.com/datenknoten/freundebuch/-/commit/408bd7a6f4afcc18eb7eff757b7a6ff49294b9b0))
+* **database:** Log collective changes to the CardDAV sync log ([2a92e61](https://gitlab.com/datenknoten/freundebuch/-/commit/2a92e61124227990b6410a8787e364ca6577c815))
+
 ## [3.3.6](https://gitlab.com/datenknoten/freundebuch/-/compare/v3.3.5...v3.3.6) (2026-11-01)
 
 ### Bug Fixes
