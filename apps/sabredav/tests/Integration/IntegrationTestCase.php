@@ -174,7 +174,12 @@ abstract class IntegrationTestCase extends TestCase
      */
     protected function cleanupData(): void
     {
-        // Delete in proper order due to foreign key constraints
+        // Delete in proper order due to foreign key constraints. Collectives
+        // go first: deleting memberships logs group card changes, which the
+        // friend_changes DELETE below then removes. Left to the cascade from
+        // friends.friends, those log rows would appear after it.
+        self::$pdo->exec('DELETE FROM collectives.collective_memberships');
+        self::$pdo->exec('DELETE FROM collectives.collectives');
         self::$pdo->exec('DELETE FROM friends.friend_changes');
         self::$pdo->exec('DELETE FROM friends.friend_met_info');
         self::$pdo->exec('DELETE FROM friends.friend_social_profiles');
@@ -390,6 +395,47 @@ abstract class IntegrationTestCase extends TestCase
             'email_address' => $emailAddress,
             'email_type' => $emailType,
             'is_primary' => $isPrimary ? 'true' : 'false',
+        ]);
+
+        return $stmt->fetch();
+    }
+
+    /**
+     * Create a system "Club" collective for a user. `updated_at` lies in the
+     * past so that a later change visibly moves the group card's REV.
+     */
+    protected function createTestCollective(int $userId, string $name = 'Disibodenberg Lauf'): array
+    {
+        $stmt = self::$pdo->prepare("
+            INSERT INTO collectives.collectives (user_id, collective_type_id, name, created_at, updated_at)
+            VALUES (:user_id,
+                    (SELECT id FROM collectives.collective_types WHERE user_id IS NULL AND name = 'Club'),
+                    :name, '2020-01-01 00:00:00+00', '2020-01-01 00:00:00+00')
+            RETURNING *
+        ");
+        $stmt->execute(['user_id' => $userId, 'name' => $name]);
+
+        return $stmt->fetch();
+    }
+
+    /**
+     * Add a friend to a collective with the Club "member" role.
+     */
+    protected function addTestMembership(int $collectiveId, int $friendId, bool $isActive = true): array
+    {
+        $stmt = self::$pdo->prepare("
+            INSERT INTO collectives.collective_memberships (collective_id, contact_id, role_id, is_active)
+            VALUES (:collective_id, :contact_id,
+                    (SELECT r.id FROM collectives.collective_roles r
+                       JOIN collectives.collective_types ct ON ct.id = r.collective_type_id
+                      WHERE ct.user_id IS NULL AND ct.name = 'Club' AND r.role_key = 'member'),
+                    :is_active)
+            RETURNING *
+        ");
+        $stmt->execute([
+            'collective_id' => $collectiveId,
+            'contact_id' => $friendId,
+            'is_active' => $isActive ? 'true' : 'false',
         ]);
 
         return $stmt->fetch();

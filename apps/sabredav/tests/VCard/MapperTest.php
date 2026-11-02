@@ -853,4 +853,115 @@ VCARD;
         $this->assertSame('jane@example.com', $json['properties']['EMAIL']['value']);
         $this->assertSame('item1', $json['properties']['EMAIL']['group']);
     }
+
+    #[Test]
+    public function collectiveToVCardBuildsAGroupCard(): void
+    {
+        $vcard = $this->mapper->collectiveToVCard([
+            'external_id' => '6f1c2a3b-0000-4000-8000-000000000001',
+            'name' => 'Disibodenberg Lauf',
+            'rev' => '2026-11-01 11:15:30+01',
+            'members' => [
+                self::member('6f1c2a3b-0000-4000-8000-0000000000a1'),
+                self::member('6f1c2a3b-0000-4000-8000-0000000000a2'),
+            ],
+        ]);
+
+        $this->assertSame(
+            "BEGIN:VCARD\r\n"
+            . "VERSION:4.0\r\n"
+            . "UID:6f1c2a3b-0000-4000-8000-000000000001\r\n"
+            . "KIND:group\r\n"
+            . "FN:Disibodenberg Lauf\r\n"
+            . "MEMBER:urn:uuid:6f1c2a3b-0000-4000-8000-0000000000a1\r\n"
+            . "MEMBER:urn:uuid:6f1c2a3b-0000-4000-8000-0000000000a2\r\n"
+            . "REV:20261101T101530Z\r\n"
+            . 'END:VCARD',
+            $vcard
+        );
+    }
+
+    #[Test]
+    public function collectiveToVCardEscapesTheName(): void
+    {
+        $vcard = $this->mapper->collectiveToVCard([
+            'external_id' => '6f1c2a3b-0000-4000-8000-000000000001',
+            'name' => 'Lauf, Team; A\\B',
+            'rev' => '2026-11-01 11:15:30+01',
+            'members' => [],
+        ]);
+
+        $this->assertStringContainsString("FN:Lauf\\, Team\\; A\\\\B\r\n", $vcard);
+    }
+
+    #[Test]
+    public function collectiveToVCardListsOnlyActiveVisibleMembers(): void
+    {
+        $visible = self::member('6f1c2a3b-0000-4000-8000-0000000000a1');
+        $hidden = [
+            self::member('6f1c2a3b-0000-4000-8000-0000000000b1', isActive: false),
+            self::member('6f1c2a3b-0000-4000-8000-0000000000c1', archivedAt: '2026-10-01 00:00:00+00'),
+            self::member('6f1c2a3b-0000-4000-8000-0000000000d1', deletedAt: '2026-10-01 00:00:00+00'),
+        ];
+        $collective = [
+            'external_id' => '6f1c2a3b-0000-4000-8000-000000000001',
+            'name' => 'Disibodenberg Lauf',
+            'rev' => '2026-11-01 11:15:30+01',
+        ];
+
+        $vcard = $this->mapper->collectiveToVCard($collective + ['members' => [$visible, ...$hidden]]);
+
+        preg_match_all('/^MEMBER:.*$/m', str_replace("\r", '', $vcard), $matches);
+        $this->assertSame(['MEMBER:urn:uuid:6f1c2a3b-0000-4000-8000-0000000000a1'], $matches[0]);
+
+        $empty = $this->mapper->collectiveToVCard($collective + ['members' => $hidden]);
+
+        $this->assertStringNotContainsString('MEMBER', $empty);
+        $this->assertStringContainsString("KIND:group\r\n", $empty);
+    }
+
+    #[Test]
+    #[DataProvider('groupKindLines')]
+    public function isGroupVCardDetectsGroupCards(string $version, ?string $kindLine, bool $expected): void
+    {
+        $lines = ['BEGIN:VCARD', 'VERSION:' . $version, 'UID:test-uuid', 'FN:Disibodenberg Lauf'];
+        if ($kindLine !== null) {
+            $lines[] = $kindLine;
+        }
+        $lines[] = 'END:VCARD';
+
+        $this->assertSame($expected, $this->mapper->isGroupVCard(implode("\r\n", $lines)));
+    }
+
+    /**
+     * @return array<string, array{string, ?string, bool}>
+     */
+    public static function groupKindLines(): array
+    {
+        return [
+            'vCard 4 KIND:group' => ['4.0', 'KIND:group', true],
+            'vCard 3 Apple GROUP' => ['3.0', 'X-ADDRESSBOOKSERVER-KIND:GROUP', true],
+            'vCard 3 Apple group' => ['3.0', 'X-ADDRESSBOOKSERVER-KIND:group', true],
+            'grouped Apple kind' => ['3.0', 'item1.X-ADDRESSBOOKSERVER-KIND:group', true],
+            'individual' => ['4.0', 'KIND:individual', false],
+            'no KIND' => ['4.0', null, false],
+        ];
+    }
+
+    /**
+     * @return array{external_id: string, is_active: bool, archived_at: ?string, deleted_at: ?string}
+     */
+    private static function member(
+        string $externalId,
+        bool $isActive = true,
+        ?string $archivedAt = null,
+        ?string $deletedAt = null,
+    ): array {
+        return [
+            'external_id' => $externalId,
+            'is_active' => $isActive,
+            'archived_at' => $archivedAt,
+            'deleted_at' => $deletedAt,
+        ];
+    }
 }

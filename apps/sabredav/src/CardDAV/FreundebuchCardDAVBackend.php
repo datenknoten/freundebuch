@@ -11,12 +11,14 @@ use Sabre\DAV\PropPatch;
 use Freundebuch\DAV\VCard\Mapper;
 
 /**
- * CardDAV backend for Freundebuch friends.
+ * CardDAV backend for Freundebuch friends and read-only collective group cards.
  *
  * Implements full CardDAV support including sync-collection (RFC 6578).
  */
 class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 {
+    private const READ_ONLY_GROUP_CARD = 'Group cards are read-only; edit collectives in Freundebuch';
+
     private PDO $pdo;
     private Mapper $mapper;
 
@@ -125,6 +127,10 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             ];
         }
 
+        foreach ($this->fetchCollectives((int) $addressBookId) as $collective) {
+            $cards[] = $this->groupCard($collective, $collective['external_id'] . '.vcf');
+        }
+
         return $cards;
     }
 
@@ -145,7 +151,12 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $friend = $this->mapper->getFriendByExternalId((int) $addressBookId, $externalId);
 
         if (!$friend) {
-            return false;
+            $collectives = $this->fetchCollectives((int) $addressBookId, $externalId);
+            if ($collectives === []) {
+                return false;
+            }
+
+            return $this->groupCard($collectives[0], $cardUri);
         }
 
         $vcardData = $this->mapper->friendToVCard($friend);
@@ -196,6 +207,10 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             throw new \Sabre\DAV\Exception\BadRequest('Card URI must be a UUID');
         }
 
+        if ($this->mapper->isGroupVCard($cardData)) {
+            throw new \Sabre\DAV\Exception\Forbidden(self::READ_ONLY_GROUP_CARD);
+        }
+
         // getCard/getCards exclude archived and soft-deleted friends, so
         // SabreDAV's httpPut finds no node and falls through to createFile for
         // a card the client still holds. external_id is globally unique, so
@@ -207,6 +222,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $stmt->execute(['external_id' => $externalId]);
         if ($stmt->fetch() !== false) {
             throw new \Sabre\DAV\Exception\Forbidden('Card belongs to an archived or deleted friend');
+        }
+
+        // Global like the friend check above: a friend with a collective's
+        // UUID would have the same card URI as its group card. SabreDAV lands
+        // here for a deleted collective because getCard does not find it.
+        $stmt = $this->pdo->prepare('SELECT 1 FROM collectives.collectives WHERE external_id = :external_id');
+        $stmt->execute(['external_id' => $externalId]);
+        if ($stmt->fetch() !== false) {
+            throw new \Sabre\DAV\Exception\Forbidden(self::READ_ONLY_GROUP_CARD);
         }
 
         $friendData = $this->mapper->vcardToFriend($cardData, $externalId);
@@ -303,6 +327,10 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         $existing = $stmt->fetch();
 
         if (!$existing) {
+            if ($this->isVisibleCollective((int) $addressBookId, $externalId)) {
+                throw new \Sabre\DAV\Exception\Forbidden(self::READ_ONLY_GROUP_CARD);
+            }
+
             return null;
         }
 
@@ -402,7 +430,15 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
             'external_id' => $externalId,
         ]);
 
-        return $stmt->rowCount() > 0;
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        if ($this->isVisibleCollective((int) $addressBookId, $externalId)) {
+            throw new \Sabre\DAV\Exception\Forbidden(self::READ_ONLY_GROUP_CARD);
+        }
+
+        return false;
     }
 
     /**
@@ -512,9 +548,9 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
 
         // The change log does not know about archiving, but getCards/getCard do:
-        // an archived friend that shows up as added or modified would be a card
-        // the client then cannot fetch. Report it as a deletion instead, which
-        // is what the client has to do with it anyway.
+        // an archived friend or a deleted collective that shows up as added or
+        // modified would be a card the client then cannot fetch. Report it as a
+        // deletion instead, which is what the client has to do with it anyway.
         $visible = $this->filterVisibleUris($addressBookId, array_merge($added, $modified));
         foreach (array_merge($added, $modified) as $uri) {
             if (!in_array($uri, $visible, true) && !in_array($uri, $deleted, true)) {
@@ -601,7 +637,8 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
 
     /**
      * Of the given `<external_id>.vcf` URIs, the ones that are actually part of
-     * the address book (not deleted, not archived).
+     * the address book: not deleted, not archived friends and not deleted
+     * collectives.
      *
      * @param array<string> $uris
      * @return array<string>
@@ -629,9 +666,14 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
                WHERE user_id = ?
                  AND external_id::text IN (' . $placeholders . ')
                  AND deleted_at IS NULL
-                 AND archived_at IS NULL'
+                 AND archived_at IS NULL
+             UNION ALL
+             SELECT external_id FROM collectives.collectives
+               WHERE user_id = ?
+                 AND external_id::text IN (' . $placeholders . ')
+                 AND deleted_at IS NULL'
         );
-        $stmt->execute([$addressBookId, ...$externalIds]);
+        $stmt->execute([$addressBookId, ...$externalIds, $addressBookId, ...$externalIds]);
 
         $visible = [];
         while ($row = $stmt->fetch()) {
@@ -639,6 +681,107 @@ class FreundebuchCardDAVBackend extends AbstractBackend implements SyncSupport
         }
 
         return $visible;
+    }
+
+    /**
+     * The user's non-deleted collectives in the input format of
+     * `Mapper::collectiveToVCard`, optionally narrowed to one external id.
+     *
+     * `rev` is the later of `updated_at` and the newest group card change in the
+     * sync log, so membership and member visibility changes move it too.
+     * Members are sorted by external id to keep `MEMBER` order and ETag stable.
+     *
+     * @return list<array{external_id: string, name: string, rev: string, members: list<array{external_id: string, is_active: bool, archived_at: ?string, deleted_at: ?string}>}>
+     */
+    private function fetchCollectives(int $userId, ?string $externalId = null): array
+    {
+        $sql = "
+            SELECT c.external_id,
+                   c.name,
+                   GREATEST(
+                     c.updated_at,
+                     (SELECT MAX(fc.changed_at)
+                        FROM friends.friend_changes fc
+                       WHERE fc.user_id = c.user_id
+                         AND fc.friend_external_id = c.external_id)
+                   ) AS rev,
+                   COALESCE(
+                     (SELECT json_agg(json_build_object(
+                               'external_id', f.external_id,
+                               'is_active', m.is_active,
+                               'archived_at', f.archived_at,
+                               'deleted_at', f.deleted_at)
+                             ORDER BY f.external_id, m.id)
+                        FROM collectives.collective_memberships m
+                        JOIN friends.friends f ON f.id = m.contact_id
+                       WHERE m.collective_id = c.id
+                         AND f.user_id = c.user_id),
+                     '[]'::json
+                   ) AS members
+            FROM collectives.collectives c
+            WHERE c.user_id = :user_id
+              AND c.deleted_at IS NULL
+        ";
+        $params = ['user_id' => $userId];
+        if ($externalId !== null) {
+            $sql .= ' AND c.external_id = :external_id';
+            $params['external_id'] = $externalId;
+        }
+        $sql .= ' ORDER BY c.external_id';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        $collectives = [];
+        while ($row = $stmt->fetch()) {
+            $collectives[] = [
+                'external_id' => $row['external_id'],
+                'name' => $row['name'],
+                'rev' => $row['rev'],
+                'members' => json_decode($row['members'], true, 512, JSON_THROW_ON_ERROR),
+            ];
+        }
+
+        return $collectives;
+    }
+
+    /**
+     * Card array for a collective group card. The ETag hashes the card content
+     * rather than `external_id . rev` like friend cards: once the sync log is
+     * pruned, `rev` falls back to `updated_at` and could repeat an older value
+     * with different members; a content hash cannot.
+     *
+     * @param array{external_id: string, name: string, rev: string, members: list<array{external_id: string, is_active: bool, archived_at: ?string, deleted_at: ?string}>} $collective
+     */
+    private function groupCard(array $collective, string $cardUri): array
+    {
+        $carddata = $this->mapper->collectiveToVCard($collective);
+
+        return [
+            'id' => $collective['external_id'],
+            'uri' => $cardUri,
+            'carddata' => $carddata,
+            'lastmodified' => strtotime($collective['rev']),
+            'etag' => '"' . md5($carddata) . '"',
+            'size' => strlen($carddata),
+        ];
+    }
+
+    /**
+     * True when the external id names one of the user's non-deleted
+     * collectives, i.e. a group card in the address book.
+     */
+    private function isVisibleCollective(int $userId, string $externalId): bool
+    {
+        $stmt = $this->pdo->prepare('
+            SELECT 1 FROM collectives.collectives
+            WHERE user_id = :user_id
+              AND external_id = :external_id
+              AND deleted_at IS NULL
+        ');
+        $stmt->execute(['user_id' => $userId, 'external_id' => $externalId]);
+
+        return $stmt->fetch() !== false;
     }
 
     private function deleteSubResources(int $friendId): void

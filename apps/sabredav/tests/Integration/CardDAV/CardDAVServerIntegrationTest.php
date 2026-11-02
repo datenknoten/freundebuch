@@ -8,6 +8,7 @@ use Freundebuch\DAV\Auth\AppPasswordBackend;
 use Freundebuch\DAV\CardDAV\FreundebuchCardDAVBackend;
 use Freundebuch\DAV\Principal\FreundebuchPrincipalBackend;
 use Freundebuch\DAV\Tests\Integration\IntegrationTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Sabre\CardDAV;
 use Sabre\DAV;
@@ -603,5 +604,184 @@ XML;
 
         $responseBody = $response->getBodyAsString();
         $this->assertStringContainsString('sync-token', $responseBody);
+    }
+
+    #[Test]
+    public function propfindReturnsGroupCardAsVCard4(): void
+    {
+        [$friend, $collective] = $this->createCollectiveWithMember();
+
+        $body = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+    <d:prop>
+        <d:getetag/>
+        <card:address-data/>
+    </d:prop>
+</d:propfind>
+XML;
+
+        $response = $this->request('PROPFIND', '/addressbooks/test@example.com/friends/', $body, [
+            'Depth' => '1',
+            'Content-Type' => 'application/xml',
+        ]);
+
+        $this->assertEquals(207, $response->getStatus());
+
+        $responseBody = $response->getBodyAsString();
+        $this->assertStringContainsString($collective['external_id'] . '.vcf', $responseBody);
+        $this->assertStringContainsString('UID:' . $collective['external_id'], $responseBody);
+        $this->assertStringContainsString('KIND:group', $responseBody);
+        $this->assertStringContainsString('FN:Disibodenberg Lauf', $responseBody);
+        $this->assertStringContainsString('MEMBER:urn:uuid:' . $friend['external_id'], $responseBody);
+        $this->assertStringNotContainsString('X-ADDRESSBOOKSERVER-KIND', $responseBody);
+    }
+
+    #[Test]
+    public function addressbookMultigetConvertsGroupCardToVCard3(): void
+    {
+        [$friend, $collective] = $this->createCollectiveWithMember();
+
+        $body = <<<XML
+<?xml version="1.0" encoding="utf-8"?>
+<card:addressbook-multiget xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
+    <d:prop>
+        <d:getetag/>
+        <card:address-data/>
+    </d:prop>
+    <d:href>/addressbooks/test@example.com/friends/{$collective['external_id']}.vcf</d:href>
+</card:addressbook-multiget>
+XML;
+
+        $response = $this->request(
+            'REPORT',
+            '/addressbooks/test@example.com/friends/',
+            $body,
+            ['Content-Type' => 'application/xml', 'Depth' => '1']
+        );
+
+        $this->assertEquals(207, $response->getStatus());
+
+        $responseBody = $response->getBodyAsString();
+        $this->assertStringContainsString('VERSION:3.0', $responseBody);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-KIND:GROUP', $responseBody);
+        $this->assertStringContainsString(
+            'X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:' . $friend['external_id'],
+            $responseBody
+        );
+        $this->assertStringNotContainsString('KIND:group', $responseBody);
+    }
+
+    #[Test]
+    public function putOnACollectivesUriIsForbidden(): void
+    {
+        $collective = $this->createTestCollective($this->testUserId());
+
+        $vcardData = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$collective['external_id']}
+FN:Hacked
+N:Hacked;;;;
+KIND:group
+END:VCARD
+VCARD;
+
+        $response = $this->request(
+            'PUT',
+            '/addressbooks/test@example.com/friends/' . $collective['external_id'] . '.vcf',
+            $vcardData,
+            ['Content-Type' => 'text/vcard']
+        );
+
+        $this->assertEquals(403, $response->getStatus());
+        $stmt = $this->getPdo()->prepare('SELECT name FROM collectives.collectives WHERE id = :id');
+        $stmt->execute(['id' => $collective['id']]);
+        $this->assertSame('Disibodenberg Lauf', $stmt->fetch()['name']);
+        $this->assertSame(0, $this->countFriends());
+    }
+
+    #[Test]
+    public function deleteOnACollectivesUriIsForbidden(): void
+    {
+        $collective = $this->createTestCollective($this->testUserId());
+
+        $response = $this->request(
+            'DELETE',
+            '/addressbooks/test@example.com/friends/' . $collective['external_id'] . '.vcf'
+        );
+
+        $this->assertEquals(403, $response->getStatus());
+        $stmt = $this->getPdo()->prepare('SELECT deleted_at FROM collectives.collectives WHERE id = :id');
+        $stmt->execute(['id' => $collective['id']]);
+        $this->assertNull($stmt->fetch()['deleted_at']);
+    }
+
+    #[Test]
+    #[DataProvider('newGroupCards')]
+    public function putOfANewGroupCardIsForbidden(string $vcardData): void
+    {
+        $response = $this->request(
+            'PUT',
+            '/addressbooks/test@example.com/friends/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.vcf',
+            $vcardData,
+            ['Content-Type' => 'text/vcard']
+        );
+
+        $this->assertEquals(403, $response->getStatus());
+        $this->assertSame(0, $this->countFriends());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function newGroupCards(): array
+    {
+        return [
+            'vCard 4 KIND:group' => [implode("\r\n", [
+                'BEGIN:VCARD',
+                'VERSION:4.0',
+                'UID:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+                'FN:Neue Gruppe',
+                'N:Neue Gruppe;;;;',
+                'KIND:group',
+                'END:VCARD',
+            ])],
+            'vCard 3 Apple group' => [implode("\r\n", [
+                'BEGIN:VCARD',
+                'VERSION:3.0',
+                'UID:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+                'FN:Neue Gruppe',
+                'N:Neue Gruppe;;;;',
+                'X-ADDRESSBOOKSERVER-KIND:group',
+                'X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+                'END:VCARD',
+            ])],
+        ];
+    }
+
+    private function testUserId(): int
+    {
+        $user = $this->getPdo()->query("SELECT u.id FROM auth.users u JOIN auth.\"user\" bu ON bu.id = u.external_id::text WHERE bu.email = 'test@example.com'")->fetch();
+
+        return (int) $user['id'];
+    }
+
+    /**
+     * @return array{array<string, mixed>, array<string, mixed>} friend and collective
+     */
+    private function createCollectiveWithMember(): array
+    {
+        $userId = $this->testUserId();
+        $friend = $this->createTestFriend($userId, ['display_name' => 'Runner']);
+        $collective = $this->createTestCollective($userId);
+        $this->addTestMembership((int) $collective['id'], (int) $friend['id']);
+
+        return [$friend, $collective];
+    }
+
+    private function countFriends(): int
+    {
+        return (int) $this->getPdo()->query('SELECT count(*) AS count FROM friends.friends')->fetch()['count'];
     }
 }

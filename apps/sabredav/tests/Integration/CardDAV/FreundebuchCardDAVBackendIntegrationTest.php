@@ -6,6 +6,7 @@ namespace Freundebuch\DAV\Tests\Integration\CardDAV;
 
 use Freundebuch\DAV\CardDAV\FreundebuchCardDAVBackend;
 use Freundebuch\DAV\Tests\Integration\IntegrationTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -830,6 +831,311 @@ VCARD;
         $stmt->execute(['id' => $friend['id']]);
 
         $this->assertSame('https://cdn.example.com/uploads/new.jpg', $stmt->fetch()['photo_url']);
+    }
+
+    #[Test]
+    public function groupCardIsServedForEachVisibleCollective(): void
+    {
+        $user = $this->createTestUser('groups@example.com');
+        $other = $this->createTestUser('groups-other@example.com');
+        $userId = (int) $user['id'];
+
+        $runner = $this->createTestFriend($userId, ['display_name' => 'Runner']);
+        $inactive = $this->createTestFriend($userId, ['display_name' => 'Inactive']);
+        $archived = $this->createTestFriend($userId, ['display_name' => 'Archived']);
+        $deleted = $this->createTestFriend($userId, ['display_name' => 'Deleted']);
+
+        $collective = $this->createTestCollective($userId);
+        $this->addTestMembership((int) $collective['id'], (int) $runner['id']);
+        $this->addTestMembership((int) $collective['id'], (int) $inactive['id'], false);
+        $this->addTestMembership((int) $collective['id'], (int) $archived['id']);
+        $this->addTestMembership((int) $collective['id'], (int) $deleted['id']);
+        $this->getPdo()
+            ->prepare('UPDATE friends.friends SET archived_at = now() WHERE id = :id')
+            ->execute(['id' => $archived['id']]);
+        $this->getPdo()
+            ->prepare('UPDATE friends.friends SET deleted_at = now() WHERE id = :id')
+            ->execute(['id' => $deleted['id']]);
+
+        $gone = $this->createTestCollective($userId, 'Alter Verein');
+        $this->getPdo()
+            ->prepare('UPDATE collectives.collectives SET deleted_at = now() WHERE id = :id')
+            ->execute(['id' => $gone['id']]);
+        $foreign = $this->createTestCollective((int) $other['id'], 'Fremder Verein');
+
+        $groupUri = $collective['external_id'] . '.vcf';
+        $goneUri = $gone['external_id'] . '.vcf';
+        $foreignUri = $foreign['external_id'] . '.vcf';
+
+        $cards = array_column($this->backend->getCards($userId), null, 'uri');
+        $this->assertArrayHasKey($groupUri, $cards);
+        $this->assertSame('"' . md5($cards[$groupUri]['carddata']) . '"', $cards[$groupUri]['etag']);
+        $this->assertArrayNotHasKey($goneUri, $cards);
+        $this->assertArrayNotHasKey($foreignUri, $cards);
+
+        $card = $this->backend->getCard($userId, $groupUri);
+        $this->assertIsArray($card);
+        $this->assertStringContainsString("KIND:group\r\n", $card['carddata']);
+        $this->assertStringContainsString("FN:Disibodenberg Lauf\r\n", $card['carddata']);
+        $this->assertStringContainsString('MEMBER:urn:uuid:' . $runner['external_id'], $card['carddata']);
+        $this->assertSame(1, substr_count($card['carddata'], 'MEMBER:'));
+
+        $this->assertFalse($this->backend->getCard($userId, $goneUri));
+        $this->assertFalse($this->backend->getCard($userId, $foreignUri));
+
+        $multiple = $this->backend->getMultipleCards($userId, [$runner['external_id'] . '.vcf', $groupUri]);
+        $this->assertCount(2, $multiple);
+
+        $initial = $this->backend->getChangesForAddressBook($userId, '', 1);
+        $this->assertIsArray($initial);
+        $this->assertContains($groupUri, $initial['added']);
+        $this->assertNotContains($goneUri, $initial['added']);
+    }
+
+    /**
+     * Every event that changes what the group card shows must log a change,
+     * move the sync token, and change ETag, `lastmodified` and `REV`.
+     *
+     * @param list<string> $expectedMembers
+     */
+    #[Test]
+    #[DataProvider('groupCardEvents')]
+    public function groupCardChangesAreLoggedAndVersioned(string $event, array $expectedMembers): void
+    {
+        $user = $this->createTestUser('group-events@example.com');
+        $userId = (int) $user['id'];
+        $friends = [
+            'member' => $this->createTestFriend($userId, ['display_name' => 'Member']),
+            'other' => $this->createTestFriend($userId, ['display_name' => 'Other']),
+            'former' => $this->createTestFriend($userId, ['display_name' => 'Former']),
+        ];
+        $collective = $this->createTestCollective($userId);
+        $this->addTestMembership((int) $collective['id'], (int) $friends['member']['id']);
+        $this->addTestMembership((int) $collective['id'], (int) $friends['former']['id'], false);
+
+        $pdo = $this->getPdo();
+        $updateFriend = fn (string $set) => $pdo
+            ->prepare("UPDATE friends.friends SET $set WHERE id = :id")
+            ->execute(['id' => $friends['member']['id']]);
+        $updateMembership = fn (string $set, string $friend) => $pdo
+            ->prepare("UPDATE collectives.collective_memberships SET $set WHERE collective_id = :collective_id AND contact_id = :contact_id")
+            ->execute(['collective_id' => $collective['id'], 'contact_id' => $friends[$friend]['id']]);
+
+        if ($event === 'unarchive member') {
+            $updateFriend('archived_at = now()');
+        }
+        if ($event === 'restore member') {
+            $updateFriend('deleted_at = now()');
+        }
+        $pdo->exec("UPDATE friends.friend_changes SET changed_at = '2020-01-01 00:00:00+00'");
+
+        $groupUri = $collective['external_id'] . '.vcf';
+        $tokenBefore = $this->currentSyncToken('group-events@example.com');
+        $before = $this->backend->getCard($userId, $groupUri);
+        $this->assertIsArray($before);
+
+        match ($event) {
+            'rename' => $pdo
+                ->prepare("UPDATE collectives.collectives SET name = 'Disibodenberg Lauf 2027' WHERE id = :id")
+                ->execute(['id' => $collective['id']]),
+            'add membership' => $this->addTestMembership((int) $collective['id'], (int) $friends['other']['id']),
+            'remove membership' => $pdo
+                ->prepare('DELETE FROM collectives.collective_memberships WHERE collective_id = :collective_id AND contact_id = :contact_id')
+                ->execute(['collective_id' => $collective['id'], 'contact_id' => $friends['member']['id']]),
+            'deactivate membership' => $updateMembership('is_active = false', 'member'),
+            'reactivate membership' => $updateMembership('is_active = true', 'former'),
+            'archive member' => $updateFriend('archived_at = now()'),
+            'unarchive member' => $updateFriend('archived_at = NULL'),
+            'delete member' => $updateFriend('deleted_at = now()'),
+            'restore member' => $updateFriend('deleted_at = NULL'),
+        };
+
+        $tokenAfter = $this->currentSyncToken('group-events@example.com');
+        $this->assertGreaterThan(
+            (int) substr($tokenBefore, strlen('sync-')),
+            (int) substr($tokenAfter, strlen('sync-'))
+        );
+
+        $changes = $this->backend->getChangesForAddressBook($userId, $tokenBefore, 1);
+        $this->assertIsArray($changes);
+        $this->assertContains($groupUri, $changes['modified']);
+        $this->assertNotContains($groupUri, $changes['added']);
+        $this->assertNotContains($groupUri, $changes['deleted']);
+
+        $after = $this->backend->getCard($userId, $groupUri);
+        $this->assertIsArray($after);
+        $this->assertNotSame($before['etag'], $after['etag']);
+        $this->assertGreaterThan($before['lastmodified'], $after['lastmodified']);
+        $this->assertNotSame(self::revOf($before['carddata']), self::revOf($after['carddata']));
+
+        preg_match_all('/^MEMBER:urn:uuid:(\S+)$/m', str_replace("\r", '', $after['carddata']), $matches);
+        $actual = $matches[1];
+        sort($actual);
+        $expected = array_map(fn (string $name) => $friends[$name]['external_id'], $expectedMembers);
+        sort($expected);
+        $this->assertSame($expected, $actual);
+    }
+
+    /**
+     * @return array<string, array{string, list<string>}>
+     */
+    public static function groupCardEvents(): array
+    {
+        return [
+            'rename' => ['rename', ['member']],
+            'add membership' => ['add membership', ['member', 'other']],
+            'remove membership' => ['remove membership', []],
+            'deactivate membership' => ['deactivate membership', []],
+            'reactivate membership' => ['reactivate membership', ['member', 'former']],
+            'archive member' => ['archive member', []],
+            'unarchive member' => ['unarchive member', ['member']],
+            'delete member' => ['delete member', []],
+            'restore member' => ['restore member', ['member']],
+        ];
+    }
+
+    #[Test]
+    public function createdCollectiveIsReportedAsAdded(): void
+    {
+        $user = $this->createTestUser('group-created@example.com');
+        $token = $this->currentSyncToken('group-created@example.com');
+
+        $collective = $this->createTestCollective((int) $user['id']);
+
+        $changes = $this->backend->getChangesForAddressBook($user['id'], $token, 1);
+        $this->assertIsArray($changes);
+        $this->assertContains($collective['external_id'] . '.vcf', $changes['added']);
+    }
+
+    #[Test]
+    public function deletedCollectiveIsReportedAsDeleted(): void
+    {
+        $user = $this->createTestUser('group-deleted@example.com');
+        $collective = $this->createTestCollective((int) $user['id']);
+        $groupUri = $collective['external_id'] . '.vcf';
+        $token = $this->currentSyncToken('group-deleted@example.com');
+
+        $this->getPdo()
+            ->prepare('UPDATE collectives.collectives SET deleted_at = now() WHERE id = :id')
+            ->execute(['id' => $collective['id']]);
+
+        $changes = $this->backend->getChangesForAddressBook($user['id'], $token, 1);
+        $this->assertIsArray($changes);
+        $this->assertContains($groupUri, $changes['deleted']);
+        $this->assertNotContains($groupUri, $changes['added']);
+        $this->assertNotContains($groupUri, $changes['modified']);
+        $this->assertFalse($this->backend->getCard($user['id'], $groupUri));
+        $this->assertNotContains($groupUri, array_column($this->backend->getCards($user['id']), 'uri'));
+    }
+
+    /**
+     * getCard misses a deleted collective, so SabreDAV routes a PUT to its URI
+     * into createCard. A friend with the collective's UUID would share the
+     * group card's URI and must not be created.
+     */
+    #[Test]
+    public function createCardOnADeletedCollectivesUriIsForbidden(): void
+    {
+        $user = $this->createTestUser('group-put@example.com');
+        $collective = $this->createTestCollective((int) $user['id']);
+        $this->getPdo()
+            ->prepare('UPDATE collectives.collectives SET deleted_at = now() WHERE id = :id')
+            ->execute(['id' => $collective['id']]);
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:{$collective['external_id']}
+FN:Hacked
+END:VCARD
+VCARD;
+
+        $this->expectException(\Sabre\DAV\Exception\Forbidden::class);
+
+        try {
+            $this->backend->createCard($user['id'], $collective['external_id'] . '.vcf', $vcard);
+        } finally {
+            $count = $this->getPdo()->query('SELECT count(*) AS count FROM friends.friends')->fetch();
+            $this->assertSame(0, (int) $count['count'], 'no friend row may be inserted');
+        }
+    }
+
+    /**
+     * Account deletion cascades into collective_memberships after the
+     * auth.users row is gone; a group card log row for it would fail the
+     * friend_changes.user_id foreign key.
+     */
+    #[Test]
+    public function deletingAUserWithCollectiveMembersSucceeds(): void
+    {
+        $user = $this->createTestUser('group-account@example.com');
+        $friend = $this->createTestFriend((int) $user['id']);
+        $collective = $this->createTestCollective((int) $user['id']);
+        $this->addTestMembership((int) $collective['id'], (int) $friend['id']);
+
+        $this->getPdo()
+            ->prepare('DELETE FROM auth.users WHERE id = :id')
+            ->execute(['id' => $user['id']]);
+
+        foreach (['friends.friend_changes', 'collectives.collectives'] as $table) {
+            $stmt = $this->getPdo()->prepare("SELECT count(*) AS count FROM $table WHERE user_id = :id");
+            $stmt->execute(['id' => $user['id']]);
+            $this->assertSame(0, (int) $stmt->fetch()['count'], $table);
+        }
+    }
+
+    #[Test]
+    public function pruningKeepsGroupCardsSyncable(): void
+    {
+        $user = $this->createTestUser('group-prune@example.com');
+        $friend = $this->createTestFriend((int) $user['id']);
+        $collective = $this->createTestCollective((int) $user['id']);
+        $this->addTestMembership((int) $collective['id'], (int) $friend['id']);
+        $groupUri = $collective['external_id'] . '.vcf';
+
+        $before = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($before);
+        $tokenBeforePrune = $before['syncToken'];
+
+        $this->getPdo()
+            ->prepare('DELETE FROM collectives.collective_memberships WHERE collective_id = :id')
+            ->execute(['id' => $collective['id']]);
+        $this->getPdo()->exec(
+            "UPDATE friends.friend_changes SET changed_at = now() - interval '91 days'"
+        );
+        $this->runRetentionSweep();
+
+        $this->assertNull(
+            $this->backend->getChangesForAddressBook($user['id'], $tokenBeforePrune, 1)
+        );
+
+        $full = $this->backend->getChangesForAddressBook($user['id'], null, 1);
+        $this->assertIsArray($full);
+        $this->assertContains($groupUri, $full['added']);
+
+        $card = $this->backend->getCard($user['id'], $groupUri);
+        $this->assertIsArray($card);
+        $this->assertStringNotContainsString('MEMBER', $card['carddata']);
+
+        $this->assertGreaterThanOrEqual(
+            (int) substr((string) $tokenBeforePrune, strlen('sync-')),
+            (int) substr((string) $full['syncToken'], strlen('sync-'))
+        );
+    }
+
+    /**
+     * The sync token the address book advertises, as a client reads it.
+     */
+    private function currentSyncToken(string $email): string
+    {
+        $addressBooks = $this->backend->getAddressBooksForUser('principals/' . $email);
+
+        return $addressBooks[0]['{http://sabredav.org/ns}sync-token'];
+    }
+
+    private static function revOf(string $carddata): ?string
+    {
+        return preg_match('/^REV:(.*)$/m', str_replace("\r", '', $carddata), $matches) === 1 ? $matches[1] : null;
     }
 
     /**

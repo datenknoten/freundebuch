@@ -7,7 +7,7 @@ namespace Freundebuch\DAV\VCard;
 use PDO;
 
 /**
- * vCard 4.0 mapper for Freundebuch friends.
+ * vCard 4.0 mapper for Freundebuch friends and collective group cards.
  *
  * Handles bidirectional conversion between Freundebuch friend data
  * and vCard 4.0 format (RFC 6350).
@@ -183,6 +183,66 @@ class Mapper
         $lines[] = 'END:VCARD';
 
         return implode("\r\n", $lines);
+    }
+
+    /**
+     * Converts a Freundebuch collective to a read-only vCard 4.0 group card
+     * (RFC 6350 `KIND:group`).
+     *
+     * `MEMBER` lists only active members whose own friend card is visible (not
+     * archived, not deleted), so every member UID points at a card the client
+     * holds. `MEMBER` is a URI, while the friend card carries the bare UUID as
+     * its UID, hence the `urn:uuid:` prefix; the friend card format stays as is.
+     * No deduplication: `idx_unique_active_membership` allows one active
+     * membership per collective and friend.
+     *
+     * @param array{external_id: string, name: string, rev: string, members: list<array{external_id: string, is_active: bool, archived_at: ?string, deleted_at: ?string}>} $collective
+     * @return string vCard 4.0 string
+     */
+    public function collectiveToVCard(array $collective): string
+    {
+        $lines = [
+            'BEGIN:VCARD',
+            'VERSION:4.0',
+            'UID:' . $collective['external_id'],
+            'KIND:group',
+            'FN:' . $this->escape($collective['name']),
+        ];
+
+        foreach ($collective['members'] as $member) {
+            if ($member['is_active'] === true && $member['archived_at'] === null && $member['deleted_at'] === null) {
+                $lines[] = 'MEMBER:urn:uuid:' . $member['external_id'];
+            }
+        }
+
+        $rev = (new \DateTimeImmutable($collective['rev']))->setTimezone(new \DateTimeZone('UTC'));
+        $lines[] = 'REV:' . $rev->format('Ymd\THis\Z');
+
+        $lines[] = 'END:VCARD';
+
+        return implode("\r\n", $lines);
+    }
+
+    /**
+     * True for a group card: vCard 4 `KIND:group` or the vCard 3 form
+     * `X-ADDRESSBOOKSERVER-KIND:group` that Apple clients send.
+     */
+    public function isGroupVCard(string $vcard): bool
+    {
+        foreach ($this->unfoldVCard($vcard) as $line) {
+            $parsed = $this->parseLine($line);
+            if ($parsed === null) {
+                continue;
+            }
+            [$property, , $value] = $parsed;
+            $property = strtoupper($property);
+            if (($property === 'KIND' || $property === 'X-ADDRESSBOOKSERVER-KIND')
+                && strtolower(trim($value)) === 'group') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
